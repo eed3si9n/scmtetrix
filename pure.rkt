@@ -27,30 +27,32 @@
   (cdr (assoc 'block-pos state))
 )
 
-;;; state transition function for LEFT
-(define (trans-block-left state)
-  (let ([block-pos (state->block-pos state)])
-    (build-state (state->cells state)
-                 (cons (- (car block-pos) 1) (cdr block-pos))
-    )
-  ); let
+;;; returns a block transition function
+(define (move-by delta)
+  (lambda (b)
+    (cons (+ (car b) (car delta))
+          (+ (cdr b) (cdr delta))) 
+  )
 )
 
-;;; state transition function for RIGHT
-(define (trans-block-right state)
-  (let ([block-pos (state->block-pos state)])
+(define move-left  (move-by '(-1 . 0)))
+(define move-right (move-by '(1 . 0)))
+
+;;; converts a block transition to a state transition function
+(define (blockf->statef f)
+  (lambda (state)
     (build-state (state->cells state)
-                 (cons (+ (car block-pos) 1) (cdr block-pos))
-    )
-  ); let
+                 (f (state->block-pos state))
+    ); build-state
+  ); lambda
 )
 
 ;;; given a state, a keycode and time t, it returns a new state
 (define (process state keycode t)
   (cond
     [(eqv? keycode (char->integer #\space)) state]
-    [(eqv? keycode cur-key-left)   (trans-block-left state)]
-    [(eqv? keycode cur-key-right)  (trans-block-right state)]
+    [(eqv? keycode cur-key-left)   ((blockf->statef move-left) state)]
+    [(eqv? keycode cur-key-right)  ((blockf->statef move-right) state)]
     [(eqv? keycode cur-key-up)    state]
     [(eqv? keycode cur-key-down)  state]
     [else state]); cond 
