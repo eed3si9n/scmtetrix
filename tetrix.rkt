@@ -1,36 +1,44 @@
 ; export PLTCOLLECTS="`pwd`:"
 ; mzscheme -r tetrix.rkt
 
-(require "curses.rkt") 
+(require "curses.rkt")
+(require "pure.rkt")
 
-(define (redraw coord)
-  (let ([x (car coord)]
-        [y (cdr coord)])
+(define cells-x-offset 1)
+(define cells-y-offset 1)
+
+;;; draw-cells
+(define (draw-cell cell)
+  (let ([x (car cell)]
+        [y (cdr cell)])
+    (cur-mvaddch (+ y cells-y-offset) (+ x cells-x-offset) #\*)
+  ); let
+);
+
+;;; redraw
+(define (redraw state)
+  (let ([cells (state->cells state)]
+        [block-pos (state->block-pos state)])
     (cur-clear)
-    (cur-mvaddch y (- x 1) #\*)
-    (cur-mvaddch y x #\*)
-    (cur-mvaddch y (+ x 1) #\*)
-    (cur-mvaddch (- y 1) x #\*)
-    
+    (map draw-cell cells)    
+    (draw-cell block-pos)
     (cur-move 0 0)
     (cur-refresh)
   ); let
-); redraw
+);
 
-(define (eventloop coord)
-  (let ([keycode (cur-getch)])    
-    (redraw coord)
-    (cond
-      [(eqv? keycode (char->integer #\q)) keycode]
-      [(eqv? keycode (char->integer #\space)) (eventloop coord)]
-      [(eqv? keycode cur-key-left)  (eventloop (cons (- (car coord) 1) (cdr coord)))]
-      [(eqv? keycode cur-key-right) (eventloop (cons (+ (car coord) 1) (cdr coord)))]
-      [(eqv? keycode cur-key-up)    (eventloop coord)]
-      [(eqv? keycode cur-key-down)  (eventloop coord)]
-      [else (eventloop coord)]); cond
+;;; eventloop
+(define (eventloop state)
+  (let ([keycode (cur-getch)])
+    (if (eqv? keycode (char->integer #\q))
+       '()
+       (begin (redraw state)
+              (eventloop (process state keycode 0)))
+    ); if
   )
-); eventloop
+);
 
+;;; main
 (define (main) 
   (dynamic-wind 
     (lambda () 
@@ -42,7 +50,7 @@
       ) 
       
     (lambda ()
-      (eventloop '(10 . 10))
+      (eventloop (init-state))
       )
     
     (lambda ()
