@@ -4,7 +4,6 @@
 (require "curses.rkt")
 (require "pure.rkt")
 
-(define board-height 20)
 (define cells-x-offset 1)
 (define cells-y-offset 1)
 

@@ -4,7 +4,11 @@
 (require mzlib/math)
 (require scheme/list)
 
-(provide init-state state->cells state->block block->position process)
+(provide init-state state->cells state->block block->position process
+         board-height board-width)
+
+(define board-height 20)
+(define board-width 9)
 
 ;;; lookup-object returns a function
 (define (lookup-object key)
@@ -26,7 +30,7 @@
 
 ;;; init-state
 (define (init-state)
-  (build-state '((6 . 6))
+  (build-state '((8 . 1))
                (init-block) ))
 
 ;;; build-block
@@ -60,6 +64,31 @@
 (define (load block cells)
   (append cells (block->cells block) ))
 
+;;; in-bound?
+(define (in-bound? new-block state)
+  (andmap (lambda (x)
+            (and (>= (car x) 0)
+                 (>= (cdr x) 0)
+                 (< (car x) board-width)
+                 (< (cdr x) board-height))); lambda 
+          (block->cells new-block) ))
+
+;;; collides?
+(define (collides? new-block cells)
+  (ormap (lambda (x)
+           (member x cells))
+         (block->cells new-block) ))
+
+;;; maybe-reload
+(define (maybe-reload new-block state)
+  (let ([unloaded (unload (state->block state) (state->cells state))])
+    (cond
+      [(not (in-bound? new-block state)) '()]
+      [(collides? new-block unloaded) '()]
+      [else (list (build-state (load new-block unloaded)
+                         new-block))]  
+    )))
+
 ;;; unload
 (define (unload block cells)
   (filter (lambda (x) (not (member x (block->cells block)))) 
@@ -80,19 +109,20 @@
 ;;; converts a block transition to a state transition function
 (define (blockf->statef f)
   (lambda (state)
-    (let ([new-block (f (state->block state))]
-          [unloaded (unload (state->block state) (state->cells state))])
-      (build-state (load new-block unloaded)
-                   new-block) )))
+    (let ([new-block (f (state->block state))])
+      (let ([reloaded (maybe-reload new-block state)])
+        (if (equal? reloaded '())
+          state
+          (car reloaded)) ))))
 
 ;;; given a state, a keycode and time t, it returns a new state
 (define (process state keycode t)
   (cond
-    [(eqv? keycode (char->integer #\space)) state]
-    [(eqv? keycode cur-key-left)   ((blockf->statef move-left) state)]
-    [(eqv? keycode cur-key-right)  ((blockf->statef move-right) state)]
-    [(eqv? keycode cur-key-up)    state]
-    [(eqv? keycode cur-key-down)  state]
+    [(equal? keycode (char->integer #\space)) state]
+    [(equal? keycode cur-key-left)   ((blockf->statef move-left) state)]
+    [(equal? keycode cur-key-right)  ((blockf->statef move-right) state)]
+    [(equal? keycode cur-key-up)    state]
+    [(equal? keycode cur-key-down)  state]
     [else state]) )
 
 ; (unload (init-block) (load (init-block) '()))
