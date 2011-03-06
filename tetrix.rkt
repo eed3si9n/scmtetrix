@@ -4,6 +4,7 @@
 (require "curses.rkt")
 (require "pure.rkt")
 
+(define board-height 20)
 (define cells-x-offset 1)
 (define cells-y-offset 1)
 
@@ -11,21 +12,16 @@
 (define (draw-cell cell)
   (let ([x (car cell)]
         [y (cdr cell)])
-    (cur-mvaddch (+ y cells-y-offset) (+ x cells-x-offset) #\*)
-  ); let
-);
+    (cur-mvaddch (+ (- board-height y) cells-y-offset) (+ x cells-x-offset) #\*) ))
 
 ;;; redraw
 (define (redraw state)
-  (let ([cells (state->cells state)]
-        [block-pos (state->block-pos state)])
+  (let ([cells (state->cells state)])
     (cur-clear)
-    (map draw-cell cells)    
-    (draw-cell block-pos)
+    (map draw-cell cells)
+    ; (draw-cell (block->position (state->block state)))
     (cur-move 0 0)
-    (cur-refresh)
-  ); let
-);
+    (cur-refresh)  ))
 
 ;;; eventloop
 (define (eventloop state)
@@ -33,10 +29,9 @@
     (if (eqv? keycode (char->integer #\q))
        '()
        (begin (redraw state)
-              (eventloop (process state keycode 0)))
-    ); if
-  )
-);
+              ; (eventloop state)
+              (eventloop (process state keycode 0)) 
+              ))))
 
 ;;; main
 (define (main) 

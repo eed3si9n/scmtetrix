@@ -1,4 +1,4 @@
-#lang scheme/base
+#lang scheme
 
 ; http://pubs.opengroup.org/onlinepubs/007908799/xcurses/curses.h.html
 

@@ -1,7 +1,10 @@
 #lang scheme
-(require "curses.rkt")
 
-(provide init-state state->cells state->block-pos process)
+(require "curses.rkt")
+(require mzlib/math)
+(require scheme/list)
+
+(provide init-state state->cells state->block block->position process)
 
 ;;; lookup-object returns a function
 (define (lookup-object key)
@@ -45,12 +48,29 @@
                '((0.0 . 0.0) (-1.0 . 0.0) (1.0 . 0.0) (0.0 . 1.0))
                'Tee  ))
 
+;;; block->cells
+(define (block->cells block)
+  (let ([block-position (block->position block)])
+        (map (lambda (local)
+               (cons (inexact->exact (floor (+ (car block-position) (car local))))
+                     (inexact->exact (floor (+ (cdr block-position) (cdr local)))) ))
+             (block->locals block)) ))
+
+;;; load
+(define (load block cells)
+  (append cells (block->cells block) ))
+
+;;; unload
+(define (unload block cells)
+  (filter (lambda (x) (not (member x (block->cells block)))) 
+          cells))
+
 ;;; returns a block transition function
 (define (move-by delta)
   (lambda (b)
-    (let ([block-position (cons (+ (car (block->position b)) (car delta))
+    (let ([new-block-position (cons (+ (car (block->position b)) (car delta))
             (+ (cdr (block->position b)) (cdr delta)))])
-      (build-block block-position
+      (build-block new-block-position
                    (block->locals b)
                    (block->kind b) ))))
 
@@ -60,8 +80,10 @@
 ;;; converts a block transition to a state transition function
 (define (blockf->statef f)
   (lambda (state)
-    (build-state (state->cells state)
-                 (f (state->block state)) )))
+    (let ([new-block (f (state->block state))]
+          [unloaded (unload (state->block state) (state->cells state))])
+      (build-state (load new-block unloaded)
+                   new-block) )))
 
 ;;; given a state, a keycode and time t, it returns a new state
 (define (process state keycode t)
@@ -73,4 +95,5 @@
     [(eqv? keycode cur-key-down)  state]
     [else state]) )
 
-; (process (init-state) cur-key-left 0)
+; (unload (init-block) (load (init-block) '()))
+; (state->cells (process (init-state) cur-key-left 0))
