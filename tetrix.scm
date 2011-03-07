@@ -1,8 +1,8 @@
 ; export PLTCOLLECTS="`pwd`:"
 ; mzscheme -r tetrix.rkt
 
-(require "curses.rkt")
-(require "pure.rkt")
+(require "curses.scm")
+(require "pure.scm")
 
 (define cells-x-offset 1)
 (define cells-y-offset 1)

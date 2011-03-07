@@ -1,6 +1,6 @@
 #lang scheme
 
-(require "curses.rkt")
+(require "curses.scm")
 (require mzlib/math)
 (require scheme/list)
 
