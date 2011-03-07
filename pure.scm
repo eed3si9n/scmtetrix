@@ -27,6 +27,8 @@
 
 (define state->cells (lookup-object 'cells))
 (define state->block (lookup-object 'block))
+(define width-range  (build-list board-width values))
+(define height-range (build-list board-height values))
 
 ;;; init-state
 (define (init-state)
@@ -133,11 +135,32 @@
         state
         (car retval) )))
 
+;;; filled?
+(define (filled? row cells)
+  (andmap (lambda (x)
+            (member (cons x row) cells))
+            width-range))
+
+;;; remove-if-filled
+(define (remove-if-filled row cells)
+  (if (filled? row cells)
+    (let* ([lower (filter (lambda (x) (< (cdr x) row)) cells)]
+           [higher (filter (lambda (x) (> (cdr x) row)) cells)]
+           [higher-lowered (map (lambda (x) (cons (car x) (- (cdr x) 1))) higher)])  
+          (append lower higher-lowered) ); let*
+    cells
+  ))
+
+;;; remove-filled
+(define (remove-filled state)
+  (let ([new-cells (foldr remove-if-filled (state->cells state) height-range)])
+       (build-state new-cells (state->block state)) ))
+
 ;;; tick
 (define (tick state)
   (let ([retval ((blockf->maybe-statef move-down) state)])
     (if (equal? retval '())
-        (load-new-block state)
+        (load-new-block (remove-filled state))
         (car retval) )))
 
 ;;; given a state, a keycode and time t, it returns a new state
@@ -153,3 +176,4 @@
 
 ; (unload (init-block) (load (init-block) '()))
 ; (state->cells (process (init-state) cur-key-left 0))
+; (remove-filled (init-state))
