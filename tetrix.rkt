@@ -18,18 +18,16 @@
   (let ([cells (state->cells state)])
     (cur-clear)
     (map draw-cell cells)
-    ; (draw-cell (block->position (state->block state)))
     (cur-move 0 0)
     (cur-refresh)  ))
 
 ;;; eventloop
-(define (eventloop state)
+(define (eventloop state t)
   (let ([keycode (cur-getch)])
     (if (eqv? keycode (char->integer #\q))
        '()
        (begin (redraw state)
-              ; (eventloop state)
-              (eventloop (process state keycode 0)) 
+              (eventloop (process state keycode t) (+ 1 t)) 
               ))))
 
 ;;; main
@@ -44,7 +42,7 @@
       ) 
       
     (lambda ()
-      (eventloop (init-state))
+      (eventloop (init-state) 0)
       )
     
     (lambda ()

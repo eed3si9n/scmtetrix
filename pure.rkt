@@ -148,6 +148,7 @@
     [(equal? keycode cur-key-right)  ((blockf->statef move-right) state)]
     [(equal? keycode cur-key-up)    state]
     [(equal? keycode cur-key-down)  (tick state)]
+    [(equal? 0 (modulo t 10)) (tick state)]
     [else state]) )
 
 ; (unload (init-block) (load (init-block) '()))
