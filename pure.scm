@@ -31,9 +31,9 @@
 (define height-range (build-list board-height values))
 
 ;;; init-state
-(define (init-state)
+(define (init-state t)
   (build-state '((8 . 1))
-               (init-block) ))
+               (init-block t) ))
 
 ;;; build-block
 (define (build-block block-position block-locals block-kind)
@@ -48,11 +48,37 @@
 ;;; state->block-pos
 (define state->block-pos  (compose block->position state->block))
 
+;;; integer->kind
+(define (integer->kind t)
+  (let ([x (modulo t 7)])
+    (cond
+      [(equal? x 0) 'Tee]
+      [(equal? x 1) 'Bar]
+      [(equal? x 2) 'Box]
+      [(equal? x 3) 'El]
+      [(equal? x 4) 'Jay]
+      [(equal? x 5) 'Es]
+      [else 'Zee] 
+    )))
+
+;;; kind->cells
+(define (kind->cells k)
+  (cond
+    [(equal? k 'Tee) '((0.0 . 0.0) (-1.0 . 0.0) (1.0 . 0.0) (0.0 . 1.0))]
+    [(equal? k 'Bar) '((0.0 . -1.5) (0.0 . -0.5) (0.0 . 0.5) (0.0 . 1.5))]
+    [(equal? k 'Box) '((-0.5 . 0.5) (0.5 . 0.5) (-0.5 . -0.5) (0.5 . -0.5))]
+    [(equal? k 'El) '((0.0 . 0.0) (0.0 . 1.0) (0.0 . -1.0) (1.0 . -1.0))]
+    [(equal? k 'Jay) '((0.0 . 0.0) (0.0 . 1.0) (0.0 . -1.0) (-1.0 . -1.0))]
+    [(equal? k 'Es) '((-0.5 . 0.0) (0.5 . 0.0) (-0.5 . 1.0) (0.5 . -1.0))]
+    [(equal? k 'Zee) '((-0.5 . 0.0) (0.5 . 0.0) (-0.5 . -1.0) (0.5 . 1.0))]
+    ))
+
 ;;; init-block
-(define (init-block)
-  (build-block '(5 . 18)
-               '((0.0 . 0.0) (-1.0 . 0.0) (1.0 . 0.0) (0.0 . 1.0))
-               'Tee  ))
+(define (init-block t)
+  (let ([kind (integer->kind t)])
+    (build-block '(5 . 18)
+                 (kind->cells kind)
+                 kind  )))
 
 ;;; block->cells
 (define (block->cells block)
@@ -151,8 +177,8 @@
           (car reloaded)) )))
 
 ;;; load-new-block
-(define (load-new-block state)
-  (let ([retval (maybe-load (init-block) state)])
+(define (load-new-block state t)
+  (let ([retval (maybe-load (init-block t) state)])
        (if (equal? retval '())
         state
         (car retval) )))
@@ -179,10 +205,10 @@
        (build-state new-cells (state->block state)) ))
 
 ;;; tick
-(define (tick state)
+(define (tick state t)
   (let ([retval ((blockf->maybe-statef move-down) state)])
     (if (equal? retval '())
-        (load-new-block (remove-filled state))
+        (load-new-block (remove-filled state) t)
         (car retval) )))
 
 ;;; given a state, a keycode and time t, it returns a new state
@@ -192,8 +218,8 @@
     [(equal? keycode cur-key-left)   ((blockf->statef move-left) state)]
     [(equal? keycode cur-key-right)  ((blockf->statef move-right) state)]
     [(equal? keycode cur-key-up)     ((blockf->statef clockwise) state)]
-    [(equal? keycode cur-key-down)  (tick state)]
-    [(equal? 0 (modulo t 10)) (tick state)]
+    [(equal? keycode cur-key-down)  (tick state t)]
+    [(equal? 0 (modulo t 10)) (tick state t)]
     [else state]) )
 
 ; (unload (init-block) (load (init-block) '()))

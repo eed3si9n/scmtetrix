@@ -46,7 +46,9 @@ cur-refresh cur-wgetch cur-getch cur-endwin stdscr
 
 (define cur-waddstr 
   (get-ffi-obj "waddstr" libcurses (_fun _win _string/locale -> _int))) 
+(define (cur-mvwaddstr w y x value) (cur-wmove w y x) (cur-waddstr w value)) 
 (define (cur-addstr value) (cur-waddstr (stdscr) value))
+(define (cur-mvaddstr y x value) (cur-mvwaddstr (stdscr) y x value))
 
 (define cur-refresh 
   (get-ffi-obj "refresh" libcurses (_fun -> _int))) 

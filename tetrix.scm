@@ -11,6 +11,7 @@
 (define (draw-cell cell)
   (let ([x (car cell)]
         [y (cdr cell)])
+    
     (cur-mvaddch (+ (- board-height y) cells-y-offset) (+ x cells-x-offset) #\x) ))
 
 ;;; redraw
@@ -19,6 +20,7 @@
     (cur-clear)
     (map draw-cell cells)
     (cur-move 0 0)
+    (cur-addstr "press q to quit")
     (cur-refresh)  ))
 
 ;;; eventloop
@@ -42,7 +44,7 @@
       ) 
       
     (lambda ()
-      (eventloop (init-state) 0)
+      (eventloop (init-state 0) 0)
       )
     
     (lambda ()
