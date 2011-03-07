@@ -11,7 +11,7 @@
 (define (draw-cell cell)
   (let ([x (car cell)]
         [y (cdr cell)])
-    (cur-mvaddch (+ (- board-height y) cells-y-offset) (+ x cells-x-offset) #\*) ))
+    (cur-mvaddch (+ (- board-height y) cells-y-offset) (+ x cells-x-offset) #\x) ))
 
 ;;; redraw
 (define (redraw state)
