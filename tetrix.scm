@@ -1,5 +1,5 @@
 ; export PLTCOLLECTS="`pwd`:"
-; mzscheme -r tetrix.rkt
+; mzscheme -r tetrix.scm
 
 (require "curses.scm")
 (require "pure.scm")
