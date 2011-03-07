@@ -114,6 +114,28 @@
 (define move-right (move-by '(1 . 0)))
 (define move-down  (move-by '(0 . -1)))
 
+;;; rotate-pair
+(define (rotate-pair x theta)
+  (let ([c (cos theta)]
+        [s (sin theta)])
+    (cons (round-to-half (- (* c (car x)) (* s (cdr x)))) 
+          (round-to-half (- (* s (car x)) (* c (cdr x))))) ))
+
+;;; round-to-half
+(define (round-to-half x)
+  (* (round (* 2 x)) 0.5))
+
+;;; returns a block transition function
+(define (rotate-by theta)
+  (lambda (b)
+    (let ([new-block-locals (map (lambda (x) (rotate-pair x theta))
+                              (block->locals b))])
+      (build-block (block->position b)
+                   new-block-locals
+                   (block->kind b) ))))
+
+(define clockwise (rotate-by (- 0 (/ pi 2.0)) ))
+
 ;;; converts a block transition to a state transition function
 (define (blockf->maybe-statef f)
   (lambda (state)
@@ -169,11 +191,12 @@
     [(equal? keycode (char->integer #\space)) state]
     [(equal? keycode cur-key-left)   ((blockf->statef move-left) state)]
     [(equal? keycode cur-key-right)  ((blockf->statef move-right) state)]
-    [(equal? keycode cur-key-up)    state]
+    [(equal? keycode cur-key-up)     ((blockf->statef clockwise) state)]
     [(equal? keycode cur-key-down)  (tick state)]
     [(equal? 0 (modulo t 10)) (tick state)]
     [else state]) )
 
 ; (unload (init-block) (load (init-block) '()))
-; (state->cells (process (init-state) cur-key-left 0))
+; (process (init-state) cur-key-up 0)
+;(state->cells (process (init-state) cur-key-up 0))
 ; (remove-filled (init-state))
